@@ -1,0 +1,137 @@
+﻿@page "/students"
+@inject IJSRuntime JsRuntime
+@inject IStudentDbService studentService 
+
+<h1>Students</h1>
+<hr />
+
+<table class="studs-table">
+    <thead>
+        <tr>
+            <th>Photo</th>
+            <th @onclick="SortByFirstName"><span class="text">FirstName</span></th>
+            <th @onclick="SortByLastName"><span class="text">LastName</span></th>
+            <th @onclick="SortByBirthDate"><span class="text">BirthDate</span></th>
+            <th @onclick="SortByStudies"><span class="text">Studies</span></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in students)
+        {
+            <tr>               
+                <td><img src="@s.UrlPhoto" class="stud-image"></td>
+                <td>@s.FirstName</td>
+                <td>@s.LastName</td>
+                <td>@s.BirthDate.ToShortDateString()</td>
+                <td>@s.Studies</td>
+                <td>
+                    <button @onclick="() => Show(s.IdStudent)" class="stud-delete-button">&times;</button>
+                    <a href="/students/@s.IdStudent" class="stud-edit"><span class="text-edit">Edit</span></a>
+                </td>            
+            </tr>  
+        }
+    </tbody>
+</table>
+
+@foreach (var s in students)
+{
+    <div class="submition" id="submition-@s.IdStudent">
+        <div class="submitiom-content">
+            <div class="header">
+                <span class="title">Czy na pewno chcesz usunąć studenta?</span>
+            </div>
+            <from class="body" action="/students">
+                <button @onclick="() => DeleteStudent(s.IdStudent)" class="sub-button" type="submit">Tak</button>
+                <button @onclick="Decline" class="sub-button">Nie</button>
+            </from>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Student> students;
+
+    protected override void OnInitialized()
+    {
+        students = StudentDbService.Students;
+    }
+
+    private async Task Show(int idStudent)
+    {
+        await JsRuntime.InvokeVoidAsync("show", idStudent);
+    }
+
+    private async Task Decline()
+    {
+        await JsRuntime.InvokeVoidAsync("decline");
+    }
+
+    private async Task Accept()
+    {
+        await JsRuntime.InvokeVoidAsync("accept");
+    }
+
+    private async Task DeleteStudent(int IdStudent)
+    {
+        students.Remove(studentService.FindStudentById(IdStudent));
+        studentService.DeleteStudent(IdStudent);
+        await Accept();
+    }
+
+    private bool order = true;
+    private void SortByFirstName()
+    {
+        if (order == true)
+        {
+            students = students.OrderBy(student => student.FirstName).ToList();
+            order = false;
+        }
+        else
+        {
+            students = students.OrderByDescending(students => students.FirstName).ToList();
+            order = true;
+        }
+    }
+
+    private void SortByLastName()
+    {
+        if (order == true)
+        {
+            students = students.OrderBy(student => student.LastName).ToList();
+            order = false;
+        }
+        else
+        {
+            students = students.OrderByDescending(students => students.LastName).ToList();
+            order = true;
+        }
+    }
+
+    private void SortByBirthDate()
+    {
+        if (order == true)
+        {
+            students = students.OrderBy(student => student.BirthDate).ToList();
+            order = false;
+        }
+        else
+        {
+            students = students.OrderByDescending(students => students.BirthDate).ToList();
+            order = true;
+        }
+    }
+
+    private void SortByStudies()
+    {
+        if (order == true)
+        {
+            students = students.OrderBy(student => student.Studies).ToList();
+            order = false;
+        }
+        else
+        {
+            students = students.OrderByDescending(students => students.Studies).ToList();
+            order = true;
+        }
+    }
+}
